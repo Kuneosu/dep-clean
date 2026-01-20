@@ -1,5 +1,10 @@
 # dep-clean
 
+English | [한국어](./README_KO.md)
+
+[![npm version](https://img.shields.io/npm/v/@kuneosu/dep-clean.svg)](https://www.npmjs.com/package/@kuneosu/dep-clean)
+[![npm downloads](https://img.shields.io/npm/dm/@kuneosu/dep-clean.svg)](https://www.npmjs.com/package/@kuneosu/dep-clean)
+
 CLI tool to find and delete dependency/cache directories like `node_modules`, `venv`, `__pycache__`, and more.
 
 ## Installation
