@@ -1,0 +1,43 @@
+{
+  "name": "@kuneosu/dep-clean",
+  "version": "1.0.0",
+  "description": "CLI tool to find and delete dependency/cache directories like node_modules, venv, __pycache__",
+  "type": "module",
+  "bin": {
+    "dep-clean": "./dist/bin/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx bin/cli.ts",
+    "start": "node dist/bin/cli.js",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "cli",
+    "cleanup",
+    "node_modules",
+    "venv",
+    "cache",
+    "dependency"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "commander": "^12.1.0",
+    "inquirer": "^9.2.23",
+    "ora": "^8.0.1"
+  },
+  "devDependencies": {
+    "@types/inquirer": "^9.0.7",
+    "@types/node": "^20.14.0",
+    "tsx": "^4.15.0",
+    "typescript": "^5.4.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
