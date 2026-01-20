@@ -15,7 +15,7 @@ npm install -g @kuneosu/dep-clean
 ## 사용법
 
 ```bash
-# 현재 디렉토리 스캔 (확인 후 삭제)
+# 현재 디렉토리 스캔 (대화형 선택)
 dep-clean
 
 # 특정 디렉토리 스캔
@@ -24,7 +24,7 @@ dep-clean ./projects
 # 목록만 확인 (삭제 안함)
 dep-clean --dry-run
 
-# 확인 없이 바로 삭제
+# 선택 UI 없이 전체 삭제
 dep-clean -y
 
 # 특정 타입만 삭제
@@ -42,12 +42,24 @@ dep-clean --help
 
 | 옵션 | 설명 |
 |------|------|
-| `-y, --yes` | 확인 없이 바로 삭제 |
+| `-y, --yes` | 선택 UI 없이 전체 삭제 |
 | `--dry-run` | 목록만 확인 (삭제 안함) |
 | `--only <items>` | 특정 타입만 삭제 (쉼표 구분) |
 | `--exclude <items>` | 특정 타입 제외 (쉼표 구분) |
 | `-h, --help` | 도움말 |
 | `-V, --version` | 버전 정보 |
+
+## 대화형 선택
+
+기본 모드에서는 체크박스 UI를 통해 개별 디렉토리를 선택하여 삭제할 수 있습니다.
+
+| 키 | 동작 |
+|----|------|
+| `↑` / `↓` | 커서 이동 |
+| `Space` | 선택 토글 |
+| `a` | 전체 선택/해제 |
+| `Enter` | 확인 후 삭제 |
+| `n` | 취소 |
 
 ## 삭제 대상 디렉토리
 
@@ -78,9 +90,16 @@ Found 5 directories to clean:
 
 Total: 1.85 GB
 
-? Delete all directories? Yes
+? Select directories to delete:
+  (Space: toggle, a: toggle all, Enter: confirm, n: cancel)
 
-✅ Deleted 5 directories, freed 1.85 GB
+❯ [x] ./project-a/node_modules     (245 MB)
+  [x] ./project-b/node_modules     (312 MB)
+  [ ] ./python-app/venv            (89 MB)
+  [x] ./python-app/__pycache__     (2 MB)
+  [x] ./rust-app/target            (1.2 GB)
+
+✅ Deleted 4 directories, freed 1.76 GB
 ```
 
 ## 라이선스

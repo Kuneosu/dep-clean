@@ -16,7 +16,7 @@ npm install -g @kuneosu/dep-clean
 ## Usage
 
 ```bash
-# Scan current directory (with confirmation)
+# Scan and select directories to delete (interactive)
 dep-clean
 
 # Scan specific directory
@@ -25,7 +25,7 @@ dep-clean ./projects
 # Preview only (no deletion)
 dep-clean --dry-run
 
-# Delete without confirmation
+# Delete all without selection UI
 dep-clean -y
 
 # Delete only specific types
@@ -43,12 +43,24 @@ dep-clean --help
 
 | Option | Description |
 |--------|-------------|
-| `-y, --yes` | Skip confirmation prompt |
+| `-y, --yes` | Delete all without selection UI |
 | `--dry-run` | List directories without deleting |
 | `--only <items>` | Only delete specified types (comma-separated) |
 | `--exclude <items>` | Exclude specified types (comma-separated) |
 | `-h, --help` | Display help |
 | `-V, --version` | Display version |
+
+## Interactive Selection
+
+In default mode, you can select individual directories to delete using a checkbox UI.
+
+| Key | Action |
+|-----|--------|
+| `↑` / `↓` | Move cursor |
+| `Space` | Toggle selection |
+| `a` | Toggle all |
+| `Enter` | Confirm and delete |
+| `n` | Cancel |
 
 ## Target Directories
 
@@ -79,9 +91,16 @@ Found 5 directories to clean:
 
 Total: 1.85 GB
 
-? Delete all directories? Yes
+? Select directories to delete:
+  (Space: toggle, a: toggle all, Enter: confirm, n: cancel)
 
-✅ Deleted 5 directories, freed 1.85 GB
+❯ [x] ./project-a/node_modules     (245 MB)
+  [x] ./project-b/node_modules     (312 MB)
+  [ ] ./python-app/venv            (89 MB)
+  [x] ./python-app/__pycache__     (2 MB)
+  [x] ./rust-app/target            (1.2 GB)
+
+✅ Deleted 4 directories, freed 1.76 GB
 ```
 
 ## License
