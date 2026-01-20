@@ -1,4 +1,5 @@
 import * as path from 'node:path';
+import * as readline from 'node:readline';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
 import ora from 'ora';
@@ -29,17 +30,87 @@ function printDirectoryList(directories: FoundDirectory[]): void {
   console.log();
 }
 
-async function confirmDelete(): Promise<boolean> {
-  const { confirm } = await inquirer.prompt<{ confirm: boolean }>([
+async function selectDirectoriesToDelete(directories: FoundDirectory[]): Promise<FoundDirectory[] | null> {
+  const maxPathLength = Math.max(...directories.map((d) => d.relativePath.length));
+
+  const choices = directories.map((dir) => ({
+    name: `${dir.relativePath.padEnd(maxPathLength + 2)} (${formatSize(dir.size)})`,
+    value: dir,
+    checked: true,
+  }));
+
+  console.log(chalk.cyan('? ') + chalk.bold('Select directories to delete:'));
+  console.log(chalk.dim('  (Space: toggle, a: toggle all, Enter: confirm, n: cancel)'));
+  console.log();
+
+  let cancelled = false;
+
+  const promptPromise = inquirer.prompt<{ selected: FoundDirectory[] }>([
     {
-      type: 'confirm',
-      name: 'confirm',
-      message: 'Delete all directories?',
-      default: false,
+      type: 'checkbox',
+      name: 'selected',
+      message: '',
+      choices,
+      pageSize: 15,
     },
   ]);
 
-  return confirm;
+  readline.emitKeypressEvents(process.stdin);
+  const keypressHandler = (_: string, key: { name: string; ctrl?: boolean }) => {
+    if (key && key.name === 'n' && !key.ctrl) {
+      cancelled = true;
+      (promptPromise.ui as unknown as { close: () => void }).close();
+    }
+  };
+  process.stdin.on('keypress', keypressHandler);
+
+  try {
+    const { selected } = await promptPromise;
+    return cancelled ? null : selected;
+  } catch {
+    return null;
+  } finally {
+    process.stdin.removeListener('keypress', keypressHandler);
+  }
+}
+
+async function performDelete(directories: FoundDirectory[]): Promise<void> {
+  console.log();
+  const deleteSpinner = ora({ text: 'Deleting directories...', isSilent: !process.stdout.isTTY }).start();
+
+  let deletedCount = 0;
+  let freedSize = 0;
+
+  const results = await deleteDirectories(directories, (current, total, dir) => {
+    deleteSpinner.text = `Deleting ${current}/${total}: ${dir.relativePath}`;
+  });
+
+  for (let i = 0; i < results.length; i++) {
+    const result = results[i];
+    if (result.success) {
+      deletedCount++;
+      freedSize += directories[i].size;
+    }
+  }
+
+  deleteSpinner.text = '';
+  deleteSpinner.stopAndPersist({ symbol: '' });
+
+  const failedResults = results.filter((r) => !r.success);
+
+  if (failedResults.length > 0) {
+    console.log();
+    console.log(chalk.yellow('\u26A0\uFE0F') + ` Some directories could not be deleted:`);
+    for (const result of failedResults) {
+      console.log(chalk.red(`  - ${result.path}: ${result.error}`));
+    }
+  }
+
+  console.log();
+  console.log(
+    chalk.green('\u2705') +
+      ` Deleted ${deletedCount} directories, freed ${chalk.bold(formatSize(freedSize))}`
+  );
 }
 
 export async function run(targetPath: string, options: CliOptions): Promise<void> {
@@ -87,51 +158,24 @@ export async function run(targetPath: string, options: CliOptions): Promise<void
     return;
   }
 
-  let shouldDelete = options.yes;
-
-  if (!shouldDelete) {
-    shouldDelete = await confirmDelete();
+  // -y 플래그: 전체 삭제
+  if (options.yes) {
+    await performDelete(directories);
+    return;
   }
 
-  if (!shouldDelete) {
+  // 기본 모드: 체크박스 UI
+  const selectedDirs = await selectDirectoriesToDelete(directories);
+
+  if (selectedDirs === null) {
     console.log(chalk.yellow('Cancelled.'));
     return;
   }
 
-  console.log();
-  const deleteSpinner = ora({ text: 'Deleting directories...', isSilent: !process.stdout.isTTY }).start();
-
-  let deletedCount = 0;
-  let freedSize = 0;
-
-  const results = await deleteDirectories(directories, (current, total, dir) => {
-    deleteSpinner.text = `Deleting ${current}/${total}: ${dir.relativePath}`;
-  });
-
-  for (let i = 0; i < results.length; i++) {
-    const result = results[i];
-    if (result.success) {
-      deletedCount++;
-      freedSize += directories[i].size;
-    }
+  if (selectedDirs.length === 0) {
+    console.log(chalk.yellow('No directories selected.'));
+    return;
   }
 
-  deleteSpinner.text = '';
-  deleteSpinner.stopAndPersist({ symbol: '' });
-
-  const failedResults = results.filter((r) => !r.success);
-
-  if (failedResults.length > 0) {
-    console.log();
-    console.log(chalk.yellow('\u26A0\uFE0F') + ` Some directories could not be deleted:`);
-    for (const result of failedResults) {
-      console.log(chalk.red(`  - ${result.path}: ${result.error}`));
-    }
-  }
-
-  console.log();
-  console.log(
-    chalk.green('\u2705') +
-      ` Deleted ${deletedCount} directories, freed ${chalk.bold(formatSize(freedSize))}`
-  );
+  await performDelete(selectedDirs);
 }

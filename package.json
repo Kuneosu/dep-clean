@@ -1,6 +1,6 @@
 {
   "name": "@kuneosu/dep-clean",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "CLI tool to find and delete dependency/cache directories like node_modules, venv, __pycache__",
   "type": "module",
   "bin": {
